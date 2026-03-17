@@ -6,7 +6,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 
 # ======== НАСТРОЙКИ ========
 TOKEN = "7948953181:AAGZMCSzF7pJq_6EmgCx9VW5QS6ZTJqu-zA"
-ADMIN_ID = 8310408786
+ADMIN_ID = 8012530329  # НОВИЙ ID!
 # ===========================
 
 bot = telebot.TeleBot(TOKEN)
@@ -30,20 +30,13 @@ def reply_to_user(message):
         msg = message.reply_to_message
         user_id = None
 
-        # Спосіб 1: переслане повідомлення
         if hasattr(msg, 'forward_from') and msg.forward_from:
             user_id = msg.forward_from.id
-
-        # Спосіб 2: через forward_from_message
         elif hasattr(msg, 'forward_from_message') and msg.forward_from_message:
             if msg.forward_from_message.from_user:
                 user_id = msg.forward_from_message.from_user.id
-
-        # Спосіб 3: звичайне повідомлення (не переслане)
         elif msg.from_user and msg.from_user.id != ADMIN_ID:
             user_id = msg.from_user.id
-
-        # Спосіб 4: forward_origin (новий формат Telegram)
         elif hasattr(msg, 'forward_origin') and msg.forward_origin:
             if hasattr(msg.forward_origin, 'sender_user') and msg.forward_origin.sender_user:
                 user_id = msg.forward_origin.sender_user.id
@@ -53,7 +46,6 @@ def reply_to_user(message):
             bot.reply_to(message, "✅ Відповідь надіслано!")
         else:
             bot.reply_to(message, "❌ Не вдалося знайти користувача. Спробуй відповісти на оригінальне переслане повідомлення.")
-
     except Exception as e:
         bot.reply_to(message, f"❌ Помилка: {e}")
 
