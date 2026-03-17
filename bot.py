@@ -27,12 +27,28 @@ def forward_to_admin(message):
 @bot.message_handler(func=lambda message: message.chat.id == ADMIN_ID and message.reply_to_message)
 def reply_to_user(message):
     try:
-        if message.reply_to_message.forward_from:
-            user_id = message.reply_to_message.forward_from.id
+        # Отримуємо повідомлення, на яке відповідає адмін
+        original = message.reply_to_message
+        
+        # Спосіб 1: Це переслане повідомлення
+        if original.forward_from:
+            user_id = original.forward_from.id
+            user_name = original.forward_from.first_name
             bot.send_message(user_id, f"✉️ Відповідь від підтримки:\n{message.text}")
-            bot.reply_to(message, "✅ Відповідь надіслано!")
-        else:
-            bot.reply_to(message, "❌ Не можу визначити користувача")
+            bot.reply_to(message, f"✅ Відповідь надіслано {user_name}!")
+            return
+            
+        # Спосіб 2: Це звичайне повідомлення (не переслане)
+        if original.from_user and original.from_user.id != ADMIN_ID:
+            user_id = original.from_user.id
+            user_name = original.from_user.first_name
+            bot.send_message(user_id, f"✉️ Відповідь від підтримки:\n{message.text}")
+            bot.reply_to(message, f"✅ Відповідь надіслано {user_name}!")
+            return
+            
+        # Якщо не вдалося визначити
+        bot.reply_to(message, "❌ Не можу визначити користувача. Спробуй відповісти на переслане повідомлення.")
+        
     except Exception as e:
         bot.reply_to(message, f"❌ Помилка: {e}")
 
