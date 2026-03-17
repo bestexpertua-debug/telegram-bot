@@ -2,6 +2,7 @@ import os
 import sys
 import threading
 import telebot
+from http.server import HTTPServer, BaseHTTPRequestHandler
 
 # ======== НАСТРОЙКИ ========
 TOKEN = "7948953181:AAGZMCSzF7pJq_6EmgCx9VW5QS6ZTJqu-zA"
@@ -35,6 +36,7 @@ def reply_to_user(message):
     except Exception as e:
         bot.reply_to(message, f"❌ Помилка: {e}")
 
+# Функція запуску бота
 def run_bot():
     try:
         print("✅ Бот запускається...")
@@ -42,7 +44,25 @@ def run_bot():
     except Exception as e:
         print(f"❌ Помилка бота: {e}")
 
+# ========== ВЕБ-СЕРВЕР ДЛЯ RENDER ==========
+class Handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Bot is running!")
+    
+    def log_message(self, format, *args):
+        return  # Вимкнути логи веб-сервера
+
+def run_http_server():
+    port = int(os.environ.get("PORT", 10000))
+    server = HTTPServer(("0.0.0.0", port), Handler)
+    print(f"🌐 Веб-сервер запущено на порту {port}")
+    server.serve_forever()
+
+# Запускаємо бота у фоновому потоці
 threading.Thread(target=run_bot, daemon=True).start()
 
-# Для Passenger (якщо потрібно на Render)
-app = None
+# Запускаємо веб-сервер (головний потік)
+if __name__ == "__main__":
+    run_http_server()
