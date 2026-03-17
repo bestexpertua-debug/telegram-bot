@@ -27,32 +27,36 @@ def forward_to_admin(message):
 @bot.message_handler(func=lambda message: message.chat.id == ADMIN_ID and message.reply_to_message)
 def reply_to_user(message):
     try:
-        # Отримуємо повідомлення, на яке відповідає адмін
-        original = message.reply_to_message
-        
-        # Спосіб 1: Це переслане повідомлення
-        if original.forward_from:
-            user_id = original.forward_from.id
-            user_name = original.forward_from.first_name
+        msg = message.reply_to_message
+        user_id = None
+
+        # Спосіб 1: переслане повідомлення
+        if hasattr(msg, 'forward_from') and msg.forward_from:
+            user_id = msg.forward_from.id
+
+        # Спосіб 2: через forward_from_message
+        elif hasattr(msg, 'forward_from_message') and msg.forward_from_message:
+            if msg.forward_from_message.from_user:
+                user_id = msg.forward_from_message.from_user.id
+
+        # Спосіб 3: звичайне повідомлення (не переслане)
+        elif msg.from_user and msg.from_user.id != ADMIN_ID:
+            user_id = msg.from_user.id
+
+        # Спосіб 4: forward_origin (новий формат Telegram)
+        elif hasattr(msg, 'forward_origin') and msg.forward_origin:
+            if hasattr(msg.forward_origin, 'sender_user') and msg.forward_origin.sender_user:
+                user_id = msg.forward_origin.sender_user.id
+
+        if user_id:
             bot.send_message(user_id, f"✉️ Відповідь від підтримки:\n{message.text}")
-            bot.reply_to(message, f"✅ Відповідь надіслано {user_name}!")
-            return
-            
-        # Спосіб 2: Це звичайне повідомлення (не переслане)
-        if original.from_user and original.from_user.id != ADMIN_ID:
-            user_id = original.from_user.id
-            user_name = original.from_user.first_name
-            bot.send_message(user_id, f"✉️ Відповідь від підтримки:\n{message.text}")
-            bot.reply_to(message, f"✅ Відповідь надіслано {user_name}!")
-            return
-            
-        # Якщо не вдалося визначити
-        bot.reply_to(message, "❌ Не можу визначити користувача. Спробуй відповісти на переслане повідомлення.")
-        
+            bot.reply_to(message, "✅ Відповідь надіслано!")
+        else:
+            bot.reply_to(message, "❌ Не вдалося знайти користувача. Спробуй відповісти на оригінальне переслане повідомлення.")
+
     except Exception as e:
         bot.reply_to(message, f"❌ Помилка: {e}")
 
-# Функція запуску бота
 def run_bot():
     try:
         print("✅ Бот запускається...")
@@ -60,15 +64,13 @@ def run_bot():
     except Exception as e:
         print(f"❌ Помилка бота: {e}")
 
-# ========== ВЕБ-СЕРВЕР ДЛЯ RENDER ==========
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200)
         self.end_headers()
         self.wfile.write(b"Bot is running!")
-    
     def log_message(self, format, *args):
-        return  # Вимкнути логи веб-сервера
+        return
 
 def run_http_server():
     port = int(os.environ.get("PORT", 10000))
@@ -76,9 +78,7 @@ def run_http_server():
     print(f"🌐 Веб-сервер запущено на порту {port}")
     server.serve_forever()
 
-# Запускаємо бота у фоновому потоці
 threading.Thread(target=run_bot, daemon=True).start()
 
-# Запускаємо веб-сервер (головний потік)
 if __name__ == "__main__":
     run_http_server()
