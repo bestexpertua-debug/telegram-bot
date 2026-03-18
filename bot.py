@@ -13,7 +13,7 @@ bot = telebot.TeleBot(TOKEN)
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    bot.reply_to(message, "Вітаємо!\n\nЩоб швидко отримати відповіді на всі запитання про роботу на біржі, перегляньте, будь ласка, цю сторінку:\nhttps://best-expert.com.ua/freelance/\n\nЦе заощадить ваш час і допоможе швидше розпочати роботу.")
+    bot.reply_to(message, "Вітаємо!\n\nЩоб швидко отримати відповіді на всі запитання про роботу на біржі, перегляньте, будь ласка, цю сторінку:\nhttps://best-expert.com.ua/freelance\n\nЦе заощадить ваш час і допоможе швидше розпочати роботу.")
     bot.send_message(ADMIN_ID, f"🆕 Новий користувач: @{message.from_user.username} (ID: {message.from_user.id})")
 
 @bot.message_handler(func=lambda message: message.chat.id != ADMIN_ID)
